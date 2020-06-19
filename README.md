@@ -45,4 +45,10 @@ sp = [
 atml_o.auto_learning_socket.register(SVC(), sp)
 
 atml_o.run(X, y)
-'''
+```
+
+* Get the best model
+
+```python
+atml_c.get_best_model_details()['MODEL']
+```
