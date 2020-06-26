@@ -4,6 +4,7 @@ import subprocess
 import time
 import shutil
 import webbrowser
+import yaml
 
 from logzero import logger
 import nnicli as nc
@@ -38,6 +39,7 @@ class NniExecutionManager(object):
 
             self._generate_nni_exec_config(model_key)
             self._generate_model_exec_files(model_key)
+            self._populate_remote_machine_details(model_key)
 
             config_path = os.path.join(self.run_dir, model_key + "_nni.yaml")
             base_port = self.exec_config['base_port']
@@ -133,9 +135,26 @@ class NniExecutionManager(object):
         else:
             m = m.replace("$PYTHON_EXE", 'python')
 
-        return m
+
 
     def _generate_model_exec_files(self, model_key):
         out_model_file = os.path.join(self.run_dir, model_key + '.json')
         with open(out_model_file, 'w') as outfile:
             json.dump(self.model_repo.repo[model_key], outfile, indent=4, sort_keys=True)
+
+    def _populate_remote_machine_details(self, model_key):
+        out_nni_file = os.path.join(self.run_dir, model_key + '_nni.yaml')
+        machine_list = self.exec_config.get('machine_lists', None)
+
+        if machine_list is not None:
+            with open(out_nni_file) as f:
+                nni_template = yaml.load(f)
+
+            machines = []
+            for ind, ip, username in enumerate(machine_list):
+                machines[ind]['ip'] = ip
+                machines[ind]['username'] = username
+            nni_template['machineList'] = machines
+
+            with open(out_nni_file, "w") as f:
+                yaml.dump(out_nni_file, f)
